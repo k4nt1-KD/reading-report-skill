@@ -1,0 +1,7 @@
+interface:
+  display_name: "阅读汇报skill1.0"
+  short_description: "依据论文与指定模板制作并校核文献阅读汇报PPT演示文稿"
+  default_prompt: "使用$reading-report-skill-1-0，根据我提供的论文和模板制作文献阅读汇报PPT。"
+policy:
+  allow_implicit_invocation: true
+
