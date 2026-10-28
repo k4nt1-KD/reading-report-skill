@@ -1,0 +1,21 @@
+{
+  "pdf": "paper.pdf",
+  "pages_dir": "build/pages",
+  "dpi": 300,
+  "renderer": {
+    "node": "C:/Users/<you>/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin/node.exe",
+    "cli": "E:/dsh/resources/app.asar.unpacked/dsh/node_modules/@deepseek-ai/libreoffice-kit/lib/cli.js"
+  },
+  "crops": {
+    "fig1": { "page": 2, "box": [0.045, 0.062, 0.500, 0.412] },
+    "fig1_flow": { "page": 2, "box": [0.045, 0.2405, 0.500, 0.3915] },
+    "tab1": { "page": 3, "box": [0.030, 0.062, 0.970, 0.258] },
+    "tab2": { "page": 4, "box": [0.505, 0.062, 0.960, 0.308] }
+  },
+  "formula_blocks": [
+    { "page": 4, "area": [0.507, 0.815, 0.975, 0.952], "numbers": [1, 2, 3, 4] },
+    { "page": 5, "area": [0.028, 0.062, 0.495, 0.520], "numbers": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] }
+  ],
+  "out": "build/crops",
+  "sheet": { "out": "build/sheet-assets.png", "cols": 3, "width": 760 }
+}

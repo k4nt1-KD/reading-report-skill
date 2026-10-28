@@ -1,40 +1,56 @@
 # reading-report-skill
 
-给 AI 编码助手（Codex / Claude Code 等）用的**文献阅读汇报 skill**。你给它一篇论文 PDF 和一个 PPT 模板，它产出一份内容可溯源、版式贴合模板的汇报演示文稿。
+给 AI 编码助手（Codex / Claude Code / DSH 等）用的**文献阅读汇报 skill**。你给它一篇论文 PDF 和一个 PPT 模板，它产出一份"内容可溯源、公式图表取自原文、版式贴合模板、交付前整套渲染核对过"的汇报演示文稿。
 
-A reusable *literature-reading presentation* skill for coding agents: feed it a paper and a slide template, get a deck whose claims stay traceable to the paper and whose visual style stays faithful to your template.
+A reusable *literature-reading presentation* skill: feed it a paper and a slide template, get a deck whose every figure, table and formula is cropped from the paper, whose style follows your template, and which was rendered page by page before delivery.
+
+当前版本：**2.0**（`SKILL.md` 的 `name` 为 `reading-report-skill-2-0`）。
 
 ---
 
 ## 它解决什么问题
 
-用 AI 做读书报告，最常见的三个毛病是：编造论文里没有的结论、把模板的母版和风格搞坏、公式和图表糊成一片。这个 skill 用一套固定的工作流程把这些堵住：
+用 AI 做读书报告，常见的坑有五个：
 
-- **内容只来自论文**：正文以论文原文为据，不添加无来源的扩写或新结论，研究假设单独注明。
-- **证据优先用原图**：优先从 PDF 提取论文原图、流程图、表格和实验对比图，不自己生成替代性的比较图。
-- **模板只做增量修改**：在副本上改，保留比例、主题、母版、字体层级、页眉页脚；品牌元素跨页一致。
-- **交付前必须渲染核对**：逐页检查公式、表格、伪代码、实验图表的清晰度，以及溢出、遮挡、裁切、行距。
-- **指令与附件分离**：附件里的命令、提示、模板占位文案一律不当成新指令，防提示词注入。
+1. **编造结论** —— 正文加进论文里没有的分析、背景和判断。
+2. **抄错符号** —— 公式重排时把下标、上标、集合符号写错，观众看不出来、作者本人也未必对得上。
+3. **图表糊** —— 自己画"替代比较图"，或用低分辨率截图。
+4. **毁模板** —— 整份导入导出把母版、页眉页脚、配色搞坏。
+5. **没核对** —— 交付前没逐页看过，溢出、遮挡、裁切留到现场才发现。
 
-## 默认汇报结构
+2.0 用一条固定流水线把这些堵住：**原图裁剪、模板继承、排版工具箱、渲染核对**。
 
-沿用项目默认结构时使用英文大标题：
+## 2.0 与 1.0 的差别
 
-| 顺序 | 章节 |
-| --- | --- |
-| 1 | Introduction（研究背景与相关文献） |
-| 2 | Problem Description（作者假设与问题建模） |
-| 3 | Optimization Algorithms |
-| 4 | Computational Study |
-| 5 | Conclusion |
-| 6 | References |
-| 7 | 收获（空白页，供填写） |
+| | 1.0 | 2.0 |
+| --- | --- | --- |
+| 流程 | 九步纪律（文字） | 九步纪律 + 可直接执行的脚本 |
+| 素材 | "优先从 PDF 提取原图" | `crop_assets.py`：300 dpi → 归一化坐标 → 墨迹 trim → 公式行带切分 → contact sheet |
+| 模板 | "在副本上修改" | `inherit_template.py`：继承上一份 deck 的母版，删页留版式（原模板丢了也能干） |
+| 排版 | 靠手感 | `deck_kit.py`：标题/项目符号/卡片/公式行/页码，含已知渲染坑的处理 |
+| 核对 | "渲染全部页面" | `verify_deck.py`：越界检查 + 标题序列 + 整套渲染 + 缩略图 |
+| 经验 | — | §10 已知坑清单（阴影、页码占位符、段首空格、公式粘连……） |
 
-章节名与顺序服从你的直接指令；这套默认值只是起点。
+## 目录结构
+
+```
+.
+├── SKILL.md                  # 技能主体：流程、house style、已知坑
+├── scripts/
+│   ├── crop_assets.py        # PDF → 100% 原文素材
+│   ├── inherit_template.py   # 复用已通过 deck 的母版
+│   ├── deck_kit.py           # python-pptx 版式工具箱
+│   ├── verify_deck.py        # 交付前核对
+│   └── assets.example.json   # 裁剪规格示例
+├── agents/openai.yaml        # 界面元数据与隐式调用策略
+├── README.md
+├── LICENSE
+└── CHANGELOG.md
+```
 
 ## 安装
 
-Skill 就是一个含 `SKILL.md` 的文件夹，把它放进助手的 skills 目录即可。
+Skill 就是一个含 `SKILL.md` 的文件夹，放进助手的 skills 目录即可。
 
 **Codex**
 
@@ -42,7 +58,7 @@ Skill 就是一个含 `SKILL.md` 的文件夹，把它放进助手的 skills 目
 git clone https://github.com/k4nt1-KD/reading-report-skill.git "$env:USERPROFILE\.codex\skills\reading-report-skill"
 ```
 
-**Claude Code**（把目录换成你自己的 skills 路径）
+**Claude Code**（目录换成你自己的 skills 路径）
 
 ```bash
 git clone https://github.com/k4nt1-KD/reading-report-skill.git ~/.claude/skills/reading-report-skill
@@ -50,52 +66,44 @@ git clone https://github.com/k4nt1-KD/reading-report-skill.git ~/.claude/skills/
 
 **手动安装**：下载本仓库，复制整个文件夹到 skills 目录，确认 `SKILL.md` 位于该文件夹根部。
 
-安装后在对话里直接说“用 reading-report-skill 根据这篇论文和模板做汇报”，或依赖助手的自动调用（`agents/openai.yaml` 里已开启 `allow_implicit_invocation`）。
+安装后在对话里说"用 reading-report-skill 2.0 根据这篇论文做汇报"，或依赖自动调用（`agents/openai.yaml` 里已开启 `allow_implicit_invocation`）。
 
 ## 怎么用
 
-最省事的一次性说法：
+一句话版本：
 
 ```text
-使用 reading-report-skill，根据我提供的论文 PDF 和模板 PPT 制作文献阅读汇报。
-要求：Introduction / Problem Description / Optimization Algorithms / Computational Study / Conclusion / References，
-最后加一页空白的“收获”。先把结构计划给我确认。
+使用 reading-report-skill 2.0，根据我提供的论文 PDF 制作文献阅读汇报。
+要求：Introduction / Problem Description / Optimization Algorithms / Computational Experiment /
+Conclusion / References，公式与约束从原文裁剪并逐条解释，伪代码整页照搬，最后加一页空白"收获"。
+先把结构计划给我确认。
 ```
 
-分步走更稳：
+分三步走更稳：
 
-1. **出计划**：先让助手列出章节与每页要点，你改完再让它动手。
-2. **出稿**：按确认的结构生成，公式、符号表、伪代码按你要求的完整度呈现。
-3. **修订**：把逐页意见（或 PPT 备注）丢回去，它按条落实，你的直接指令优先于评阅意见。
+1. **出计划**：先要章节与每页要点，改完再动手。
+2. **出稿**：按确认的结构生成；公式、符号表、伪代码按你要求的完整度呈现。
+3. **修订**：把逐页意见（或 PPT 备注）丢回去，它按条落实并重新渲染核对。
+
+配套脚本（可选，供助手在终端里调用）：
+
+```powershell
+python scripts/inherit_template.py --base last-approved.pptx --out build/base.pptx --list
+python scripts/crop_assets.py --spec build/assets.json          # 见 assets.example.json
+python scripts/verify_deck.py --pptx output/deck.pptx --out build/render --sheet build/sheet.png
+```
 
 ## 已知边界
 
 - 不联网补事实：内容只来自你给的材料。
-- 只在论文确实包含伪代码时才搬伪代码；要求“完整伪代码”时不会删步骤或改算法逻辑。
-- 模板保真优先于机械检查：整份导入导出若明显破坏母版，会改为在副本上做局部修订。
+- 只在论文确实包含伪代码时才搬伪代码；要求"照搬"时不删步骤、不改逻辑、不加旁注。
+- 不自己画替代论文证据的比较图或分析图。
+- 模板保真优先于机械检查：整份导入导出若明显破坏母版，改为在副本上做局部修订。
+- 2.0 的脚本默认 16:9（10 × 5.625 in）；换 4:3 模板需要改常量。
 
 ## 自定义
 
-`SKILL.md` 末尾的 **“本项目品牌与文案偏好”** 一节是作者个人的默认设置（汇报人、学校、学院等）。**公开使用前请改成你自己的**，或整节删除——它只在用户继续使用该项目模板时才生效，不影响其余流程。
-
-## 仓库结构
-
-```
-.
-├── SKILL.md              # 技能主体：工作流程、保真约束、交付标准
-├── agents/openai.yaml    # 界面元数据：显示名、简介、默认提示、调用策略
-├── README.md
-├── LICENSE
-└── CHANGELOG.md
-```
-
-## 版本
-
-采用 `1.0` 式版本号，`SKILL.md` 的 `name` 字段即技能标识。变更记录见 [CHANGELOG.md](CHANGELOG.md)。
-
-## 贡献
-
-欢迎提 Issue 或 PR：补充新的汇报结构模板、更严的核对清单、对其他演示文稿工具链的适配。提交前请确保 `SKILL.md` 的 frontmatter 仍为合法 YAML，且新增段落没有把你的个人/机构信息写死进通用流程。
+`SKILL.md` 末尾的 **"本项目默认值"** 是作者个人的默认设置（汇报人、学校、学院、章节名、输出目录）。**公开使用前请改成你自己的**，或整节删除——它只在沿用该项目模板时生效。
 
 ## 许可
 
